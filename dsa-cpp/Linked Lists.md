@@ -72,7 +72,7 @@ temp->next = NULL;
 A = temp;
 ```
 
-```c++ fold title:"Inserting element at end"
+```c++ title:"Inserting element at end"
 Node* temp1 = A;
 while (temp->next != NULL){
 	temp1 - temp1 -> next;

@@ -23,6 +23,7 @@ public:
 
 **What can be made better?** 
 - As `set` is basically BST, it's tree operations take `logn` time. Instead use a hash table (`unordered_set`) which is basically a bucket system, and it's operations are in average case `O(1)`. Close because the worst case is `O(n)` if all the elements collide into ONE bucket.
+
 **New things:**
 - `Insert`: is an API, it *returns* a `pair<iterator, bool>` where iterator is basically a pointer to either the new element added (in which case bool is `true`) or the already existing element that didn't get inserted again (bool being `false`). Thus, without checking for size in each loop, we could just check if the `pair.second` value was false.
 - `count` and `contains` can become alternatives for the if condition, checking if the set contained the element already. But `insert.second` is much cleaner.
@@ -30,10 +31,12 @@ public:
 - Contains (for newer C++20): `.contains(number)` is a boolean function that returns true if an element exists in the container. 
 - So instead of *"did size increase?"* we could have *"is this element already in the set?"* If both output 0 (the element was not there) then insert the element and continue. If both output 1 (the element is already there!) break and return, since this is a duplicate.
 - So this would eventually lead us to `O(n)` instead of `O(nlogn)`!
+
 **Some errors that went unnoticed:**
 - `nums.size()` outputs an unsigned integer `size_t` (a non-negative number) but in the `for` loop, using `int i=0` makes i a signed integer. Now usually this is fine. C++ converts i to unsigned integer during the comparison (`i < nums.size()`) and it doesn't break.
 - Yet it WILL break in the case where `nums.size() = 0` and we compute `nums.size() - 1`. The output would not be -1 but some huge number.
 - Fix? Use `size_t i` OR write loops using elements themselves (`for (int x : nums)`).
+
 **Extras:**
 - `size_t` is a type, just like int, float or bool. The standard library uses it for sizes and indices, which are all non-negative numbers. As `.size()` returns `size_t`, it's just better to compare it to an `i` which is `size_t` and not `int`.
 - `auto` is the lazy-guy's alternative to all. At compile time (when the code is converted to assembly/machine language) auto is decided by the type of what is on the right side of it.
@@ -67,3 +70,71 @@ public:
     }
 };
 ```
+
+### 2. Valid Anagram
+```cpp title:"My solution"
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        multiset<char> s_set;
+        multiset<char> t_set;
+        for (char a : s){
+            s_set.insert(a);
+        }
+        for (char b : t){
+            t_set.insert(b);
+        }
+        if (s_set == t_set) return true;
+        return false;
+    }
+};
+```
+
+- Time Complexity: `O((n+m)log(n+m))` Space Complexity: `O(n+m)`
+- Can be improved by using two other solutions, each using the same concept:
+	- Using a hash map, which stores counts of each char
+	- As characters are only 26 in number, an array of 26 size can store frequency of each character and index can be easily calculated using the trick `c - 'a` where c is a character. 
+- The concept: As you go along `s` increment counts of each character, and as you go along `t` decrement counts of each character. If both were anagrams, the hashmap or array would all be containing zeroes. If any is non-zero, then both strings had different number of characters or different characters themselves.
+```cpp title:"Using unordered_map, O(n)"
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        unordered_map<char, int> freq;
+        for (char a : s){
+            freq[a]++;
+        }
+        for (char b : t){
+            freq[b]--;
+        }
+        for (const auto& x : freq){
+            if (x.second != 0) return false;
+        }
+        return true;
+    }
+};
+```
+```cpp title:"Using array, O(1)"
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        int freq[26] = {0};
+        for (char a : s){
+            freq[a - 'a']++;
+        }
+        for (char b : t){
+            freq[b - 'a']--;
+        }
+        for (int x : freq){
+            if (x != 0) return false;
+        }
+        return true;
+    }
+};
+```
+
+**New:**
+- `auto` vs `auto&`: `auto&` is faster because it doesn't copy the value. It refers to the original value itself. So any modifications to it will modify the original.
+- An initial guard of checking both string length would save some time and allow me to write a common `for` loop for both increments and decrements.
+- `const` is used to tell the compiler that this variable will not be modified. Even if you try to, it won't work.
+- `const auto&` seems counter intuitive (why would I want to auto& for modifying but const to keep it same) but in reality you get best of both worlds here, as auto& saves time but const stops any accidental modifications to the original value.
+- But in all seriousness, these `auto&` stuff doesn't really matter for small data types like int, char, bool but does in strings/vectors or bigger data structures. So auto is fine. Both are same speed for the small data types.
