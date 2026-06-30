@@ -138,3 +138,59 @@ public:
 - `const` is used to tell the compiler that this variable will not be modified. Even if you try to, it won't work.
 - `const auto&` seems counter intuitive (why would I want to auto& for modifying but const to keep it same) but in reality you get best of both worlds here, as auto& saves time but const stops any accidental modifications to the original value.
 - But in all seriousness, these `auto&` stuff doesn't really matter for small data types like int, char, bool but does in strings/vectors or bigger data structures. So auto is fine. Both are same speed for the small data types.
+
+### 3. Two sum
+```cpp title:"My solution"
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        unordered_map<int, int> hash;
+        int n = nums.size();
+        for (int i = 0; i < n; i++){
+            hash[nums[i]] = i;
+        }
+        for (int i = 0; i < n; i++){
+            if (hash.find(target - nums[i]) != hash.end() && i != hash[target - nums[i]]) return {min(i, hash[target - nums[i]]), max(i, hash[target - nums[i]])};
+        }
+        return {};
+    }
+};
+
+```
+
+**Problems I faced:**  
+
+- Tried a two pointer approach first, incrementing and decrementing one by one but it had a major flaw of ignoring values that aren't symmetrically placed in the array
+- Then I knew I had to use the `O(1)` finding ability of `hashmaps`.
+- Got confused over `unordered_set` and `unordered_map`
+- Had to look up how `find()` works and how if it doesn't work I have to use `hash.end()`
+- Problems saving the index, at first tried `hash[nums[i]]+=i` assuming it gets created with 0 first then I could add i to it, but later realized I have to literally equate it to `i`.
+- Then only some syntax errors while writing the return value. 
+- Wanted to use `auto& x : nums` but needed index information so had to resort to `i`. `find()` gave out an iterator (pointer) which is not what I needed. I could dereference it and find the key (the number) using `.first` and its index (value) using `.second`
+- Then faced the same index error which I fixed with a simple condition.
+
+**What  can be made better**:  
+- Even though this is `O(n)` it required *two* passes (it completed in `2n` time) it was still possible to do it in *one* pass. `n` and `2n` don't matter to Big-O, but one passes achieves the same thing in half the number of operations.
+- The possibility being, *before you add the current element, check whether its complement is already in the array. If it is, return. If it's not, add the element in hash map then go to next element.*
+- This also solves the same-index error as well, because since we are creating the hash map as we go, same index values don't exist. The moment we find a solution we return.
+- It ALSO solves the fact that we have to return the lower index first. Since the current element is the latest one, the complement would already be before it. So its index is automatically lower.
+- Why `hash.find(x)->second` is better? Because if I used `hash[x]` it would have created a value in the hash map, being 0. This creation is useless and wastes memory. `hash.find(x)->second` doesn't create anything.
+- I could replace `hash.find(x) != hash.end()` with `hash.contains(x)` which is much cleaner but only available in C++20.
+
+```cpp title:"One pass solution"
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        unordered_map<int, int> hash;
+        int n = nums.size();
+        for (int i = 0; i < n; i++){
+            int x = target - nums[i];
+            if (hash.find(x) != hash.end()) return {hash.find(x)->second, i};
+            hash[nums[i]] = i;
+        }
+        return {};
+    }
+};
+```
+
+### 4.
