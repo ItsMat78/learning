@@ -586,3 +586,122 @@ public:
 
 - First solution: O(n) time, O(n) extra space (two helper arrays).
 - Two-pass solution: O(n) time, O(1) extra space (auxiliary) (only the output, plus one scalar).
+
+### 8. Valid Sudoku
+```cpp title:"My solution"
+class Solution {
+public:
+    bool isValidSudoku(vector<vector<char>>& board) {
+        //i = row
+        //j = col
+        for (int i=0; i < 9; i++){
+            unordered_map<int, int> for_row;
+            unordered_map<int, int> for_col;
+            for (int j=0; j < 9; j++){
+                if (board[i][j] != '.'){
+                    if (for_row[board[i][j]] < 1) for_row[board[i][j]]++;
+                    else return false;
+                }   
+                if (board[j][i] != '.'){
+                    if (for_col[board[j][i]] < 1) for_col[board[j][i]]++;
+                    else return false;
+                }
+            }
+        }
+        unordered_map<int, unordered_map<int,int>> for_sqr;
+        for (int i=0; i < 9; i++){
+            for (int j=0; j < 9; j++){
+                int current_sqr = (i/3)*3 + (j/3);
+                if (board[i][j] != '.'){
+                    if (for_sqr[current_sqr][board[i][j]] < 1){
+		                for_sqr[current_sqr][board[i][j]]++;
+	                } else return false;
+                }
+            }
+        }
+        return true;
+    }
+};
+```
+
+**Problems I've faced:**  
+- Okay so clearly when I read the question, I was blasted by the size of the sudoku. But I knew how they worked so I did come up with the ideas of checking duplicates in rows and columns each, one pass for each in `O(n2)` time. Hash maps!
+- `O(n2)` is fine actually because the sudoku board is only 9x9 meaning only 81 operations needed.
+- The problem was, how do we check the 3x3 squares?? After much thought of `for` loops, I realized this needed some trick and not a brute for looping for each 3x3 square in the sudoku board.
+- A looked up at a hint in the problem, and it said that I could calculate the index (between 0-8) for each 3x3 square, just by using the row and column value of the current cell. It was `(row/3)*3 + (col/3)`.
+- At first I was like, wtf, how could I iterate through?
+- But then, why do I have to iterate through? I could create a `hash_map` storing a `hash_map` connected to that square's index. This nested `hash_map` would be the one checking duplicates.
+- But I was unsure if I would be able to code it well so I ended up doing two passes.
+- I also realized I had to put the `for_row` and `for_col` in the outer loop instead of the inner loop because it forgot at every cell lmfao.
+- Of course, I had early returning the moment a number went above one.
+- Oh! I had to change the condition of the duplicate from `<2` to `<1` because `map[val]` creates it in the hash map, and if a duplicate is seen it will push the value from 0 to 1 directly. The moment a duplicate is seen, `<1` is false so it returns early.
+- Now I'll put the square pass in the main loop so there's just ONE pass.
+```cpp title:"One pass solution"
+class Solution {
+public:
+    bool isValidSudoku(vector<vector<char>>& board) {
+        //i = row
+        //j = col
+        unordered_map<int, unordered_map<int,int>> for_sqr;
+        for (int i=0; i < 9; i++){
+            unordered_map<int, int> for_row;
+            unordered_map<int, int> for_col;
+            for (int j=0; j < 9; j++){
+                if (board[i][j] != '.'){
+                    if (for_row[board[i][j]] < 1) for_row[board[i][j]]++;
+                    else return false;
+                }
+                if (board[j][i] != '.'){
+                    if (for_col[board[j][i]] < 1) for_col[board[j][i]]++;
+                    else return false;
+                }
+                int current_sqr = (i/3)*3 + (j/3);
+                if (board[i][j] != '.'){
+                    if (for_sqr[current_sqr][board[i][j]] < 1) {
+	                    for_sqr[current_sqr][board[i][j]]++;
+	                }
+                    else return false;
+                }
+            }
+        }
+        return true;
+    }
+};
+```
+
+**What can be done better?**  
+- Hashmaps are cool. But you know what's cooler? Arrays. We can access elements in literally `O(1)` time.
+- Similar to storing `freq[26]` when testing anagrams, we know that the numbers in the sudoku table are between 1-9 and rows, columns, and 3x3 squares are also from 0-8 (index).
+- So we could store 3 matrices: 
+	- `row_count[row r][what number we looking at, n]` which tells the number of times a number n was seen in row r. 
+	- `col_count[col c][what number we looking at, n]` which tells the number of times a number n was seen in col c;
+	- `sqr_count[sqr s][what number we looking at n` which tells the number of times a number n was seen in sqr s.
+	- `r, c, s` all range from `0-8`, and the number `n` itself too.
+- Let's code it!
+```cpp title:"Solution using arrays"
+class Solution {
+public:
+    bool isValidSudoku(vector<vector<char>>& board) {
+        //i = row
+        //j = col
+        int sqr_c[9][9] = {0};
+        int row_c[9][9] = {0};
+        int col_c[9][9] = {0};
+        for (int i=0; i < 9; i++){
+            for (int j=0; j < 9; j++){
+                if (board[i][j]=='.') continue;
+                
+                if (row_c[i][board[i][j]-'1']==0) row_c[i][board[i][j]-'1']++;
+                else return false;
+
+                if (col_c[j][board[i][j]-'1']==0) col_c[j][board[i][j]-'1']++;
+                else return false;
+
+                if (sqr_c[(i/3)*3+(j/3);][board[i][j]-'1']==0) sqr_c[s][board[i][j]-'1']++;
+                else return false;
+            }
+        }
+        return true;
+    }
+};
+```
